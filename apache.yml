@@ -1,0 +1,41 @@
+- hosts: 192.168.43.45
+  vars:
+      - document_root: "/var/www/lw"
+  vars_prompt:
+      - name: port
+        prompt: "Enter Port No: "
+        private: no
+  tasks:
+  - debug:
+       msg: "{{ ansible_all_ipv4_addresses[0] }}"
+  - firewalld:
+       port: "{{ port }}/tcp"
+       permanent: yes
+       state: enabled
+
+  - package:
+       name: "httpd"
+       state: present
+  - file:
+       state: directory
+       path: "{{document_root}}"
+  - template:
+       src: "my.conf"
+       dest: "/etc/httpd/conf.d/my.conf"
+    notify:
+      - RestartApache
+  - name: "copy file to /var/www/lw folder"
+    copy:
+       src: "html"
+       dest: "{{document_root}}"
+  - name: "start httpd service"
+    service:
+       name: "httpd"
+       state: started
+  handlers:
+    - name: RestartApache
+      service:
+        name: httpd
+        state: restarted
+
+
